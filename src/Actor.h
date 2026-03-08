@@ -279,9 +279,11 @@ private:
     }
 
     // Static trampoline for xTaskCreateStatic
+    // Cast to Actor* (not ActorBase*) so we can access protected _taskEntry()
+    // from within this derived class's static member function.
     static void _taskEntryTrampoline(void* pvParameters) {
-        ActorBase* actor = static_cast<ActorBase*>(pvParameters);
-        actor->_taskEntry();
+        Actor* self = static_cast<Actor*>(pvParameters);
+        self->_taskEntry();
     }
 };
 

@@ -14,14 +14,7 @@
 // Signals
 // ---------------------------------------------------------------------------
 
-enum Signal : uint16_t {
-    // Framework reserved
-    SIG_ENTRY = SIGNAL_ENTRY,
-    SIG_EXIT  = SIGNAL_EXIT,
-
-    // Application signals
-    SIG_TIMEOUT = SIGNAL_USER,
-};
+static constexpr Signal SIG_TIMEOUT = SIGNAL_USER;
 
 // ---------------------------------------------------------------------------
 // BlinkyActor
@@ -44,7 +37,7 @@ private:
 
     void stateLedOff(Event const& event) {
         switch (event.signal) {
-            case SIG_ENTRY:
+            case SIGNAL_ENTRY:
                 digitalWrite(_ledPin, LOW);
                 startTimer(SIG_TIMEOUT, 500);  // 500ms off
                 break;
@@ -53,7 +46,7 @@ private:
                 transitionTo(&BlinkyActor::stateLedOn);
                 break;
 
-            case SIG_EXIT:
+            case SIGNAL_EXIT:
                 cancelTimer(SIG_TIMEOUT);
                 break;
 
@@ -64,7 +57,7 @@ private:
 
     void stateLedOn(Event const& event) {
         switch (event.signal) {
-            case SIG_ENTRY:
+            case SIGNAL_ENTRY:
                 digitalWrite(_ledPin, HIGH);
                 startTimer(SIG_TIMEOUT, 500);  // 500ms on
                 break;
@@ -73,7 +66,7 @@ private:
                 transitionTo(&BlinkyActor::stateLedOff);
                 break;
 
-            case SIG_EXIT:
+            case SIGNAL_EXIT:
                 cancelTimer(SIG_TIMEOUT);
                 break;
 

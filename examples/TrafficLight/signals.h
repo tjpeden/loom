@@ -7,13 +7,8 @@
 
 #include <Loom.h>
 
-enum Signal : uint16_t {
-    SIGNAL_ENTRY = 0,
-    SIGNAL_EXIT  = 1,
-
-    SIGNAL_TIMEOUT,
-    SIGNAL_PEDESTRIAN_REQUEST,
-    SIGNAL_POLL_PIN,
-};
+static constexpr Signal SIGNAL_TIMEOUT             = SIGNAL_USER;
+static constexpr Signal SIGNAL_PEDESTRIAN_REQUEST   = SIGNAL_USER + 1;
+static constexpr Signal SIGNAL_POLL_PIN             = SIGNAL_USER + 2;
 
 #endif // TRAFFIC_LIGHT_SIGNALS_H

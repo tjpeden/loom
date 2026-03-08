@@ -20,15 +20,8 @@
 // Signals
 // ---------------------------------------------------------------------------
 
-enum Signal : uint16_t {
-    // Framework reserved
-    SIG_ENTRY = SIGNAL_ENTRY,
-    SIG_EXIT  = SIGNAL_EXIT,
-
-    // Application signals
-    SIG_POLL_BUTTON = SIGNAL_USER,
-    SIG_BUTTON_PRESSED,
-};
+static constexpr Signal SIG_POLL_BUTTON    = SIGNAL_USER;
+static constexpr Signal SIG_BUTTON_PRESSED = SIGNAL_USER + 1;
 
 // ---------------------------------------------------------------------------
 // ButtonActor — polls a button with debouncing, publishes press events
@@ -52,7 +45,7 @@ private:
 
     void stateIdle(Event const& event) {
         switch (event.signal) {
-            case SIG_ENTRY:
+            case SIGNAL_ENTRY:
                 startRepeatingTimer(SIG_POLL_BUTTON, 20);  // 20ms poll
                 break;
 
@@ -66,7 +59,7 @@ private:
                 break;
             }
 
-            case SIG_EXIT:
+            case SIGNAL_EXIT:
                 cancelTimer(SIG_POLL_BUTTON);
                 break;
 
@@ -97,7 +90,7 @@ private:
 
     void stateOff(Event const& event) {
         switch (event.signal) {
-            case SIG_ENTRY:
+            case SIGNAL_ENTRY:
                 digitalWrite(_ledPin, LOW);
                 break;
 
@@ -112,7 +105,7 @@ private:
 
     void stateOn(Event const& event) {
         switch (event.signal) {
-            case SIG_ENTRY:
+            case SIGNAL_ENTRY:
                 digitalWrite(_ledPin, HIGH);
                 break;
 

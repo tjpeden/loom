@@ -17,20 +17,14 @@
 #include <Adafruit_LSM6DS33.h>
 #include <Adafruit_ST7789.h>
 #include <Adafruit_GFX.h>
+#include <SPI.h>
 
 // ---------------------------------------------------------------------------
 // Signals
 // ---------------------------------------------------------------------------
 
-enum Signal : uint16_t {
-    // Framework reserved
-    SIG_ENTRY = SIGNAL_ENTRY,
-    SIG_EXIT  = SIGNAL_EXIT,
-
-    // Application signals
-    SIG_READ_SENSOR = SIGNAL_USER,
-    SIG_ACCEL_DATA,
-};
+static constexpr Signal SIG_READ_SENSOR = SIGNAL_USER;
+static constexpr Signal SIG_ACCEL_DATA  = SIGNAL_USER + 1;
 
 // ---------------------------------------------------------------------------
 // Acceleration payload — fits within Event's 32-byte payload
@@ -63,7 +57,7 @@ private:
 
     void stateRunning(Event const& event) {
         switch (event.signal) {
-            case SIG_ENTRY:
+            case SIGNAL_ENTRY:
                 startRepeatingTimer(SIG_READ_SENSOR, 100);  // 10 Hz
                 break;
 
@@ -82,7 +76,7 @@ private:
                 break;
             }
 
-            case SIG_EXIT:
+            case SIGNAL_EXIT:
                 cancelTimer(SIG_READ_SENSOR);
                 break;
 
@@ -104,7 +98,11 @@ public:
     DisplayActor() : Actor("Display") {}
 
     void begin() override {
-        // CLUE TFT: ST7789 240x240, CS=32, DC=33, RST=34
+        // CLUE TFT backlight — must be turned on
+        pinMode(TFT_LITE, OUTPUT);
+        digitalWrite(TFT_LITE, HIGH);
+
+        // CLUE TFT: ST7789 240x240 on SPI1
         _tft.init(240, 240);
         _tft.setRotation(1);
         _tft.fillScreen(ST77XX_BLACK);
@@ -118,34 +116,47 @@ public:
     }
 
 private:
-    // CLUE TFT pin assignments
-    static constexpr int TFT_CS  = 32;
-    static constexpr int TFT_DC  = 33;
-    static constexpr int TFT_RST = 34;
+    // CLUE TFT pin assignments (from variant.h)
+    static constexpr int TFT_CS   = 31;
+    static constexpr int TFT_DC   = 32;
+    static constexpr int TFT_RST  = 33;
+    static constexpr int TFT_LITE = 34;
 
-    Adafruit_ST7789 _tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
+    // CLUE TFT is on SPI1 (SPIM3, the high-speed 32 MHz bus)
+    Adafruit_ST7789 _tft = Adafruit_ST7789(&SPI1, TFT_CS, TFT_DC, TFT_RST);
 
     void stateRunning(Event const& event) {
         switch (event.signal) {
             case SIG_ACCEL_DATA: {
                 AccelData data = event.getPayload<AccelData>();
 
-                // Clear the data area
-                _tft.fillRect(10, 50, 220, 80, ST77XX_BLACK);
+                // Overwrite previous text in place — setTextColor(fg, bg)
+                // fills the background behind each character, eliminating
+                // the need for fillRect() and the flicker it causes.
 
                 _tft.setCursor(10, 50);
-                _tft.print("X: "); _tft.println(data.x, 2);
+                _tft.print("X: "); printPadded(data.x);
 
                 _tft.setCursor(10, 75);
-                _tft.print("Y: "); _tft.println(data.y, 2);
+                _tft.print("Y: "); printPadded(data.y);
 
                 _tft.setCursor(10, 100);
-                _tft.print("Z: "); _tft.println(data.z, 2);
+                _tft.print("Z: "); printPadded(data.z);
                 break;
             }
 
             default:
                 break;
+        }
+    }
+
+    /// Print a float right-padded with spaces so shorter values overwrite
+    /// any leftover characters from the previous longer value.
+    void printPadded(float value) {
+        int n = _tft.print(value, 2);
+        // Pad to a fixed width (8 chars covers -XX.XX plus margin)
+        for (int i = n; i < 8; i++) {
+            _tft.print(' ');
         }
     }
 };
