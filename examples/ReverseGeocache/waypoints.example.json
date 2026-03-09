@@ -1,0 +1,23 @@
+{
+  "arrival_threshold": 0.0075,
+  "waypoints": [
+    {
+      "lat": 40.748817,
+      "lon": -73.985428,
+      "name": "Empire State",
+      "desc": "Start at the Empire State Building"
+    },
+    {
+      "lat": 40.758896,
+      "lon": -73.985130,
+      "name": "Times Square",
+      "desc": "Head north to Times Square"
+    },
+    {
+      "lat": 40.785091,
+      "lon": -73.968285,
+      "name": "Central Park",
+      "desc": "Walk up to Central Park"
+    }
+  ]
+}
