@@ -126,9 +126,12 @@ void loop() {
 
 ## Design Principles
 
-- **Fully static allocation.** All memory is allocated at compile time. Actor
-  objects embed their FreeRTOS stack, queue storage, and timer slots. The
-  compiler memory report reflects actual usage. No `malloc`/`new` ever.
+- **Fully static allocation.** The framework itself uses zero dynamic
+  allocation — all FreeRTOS tasks, queues, and timers use `*Static` APIs with
+  buffers embedded directly in Actor objects. The compiler memory report
+  reflects actual framework usage. Note that some examples use third-party
+  libraries (ArduinoJson, LittleFS, Adafruit sensor drivers) that allocate
+  internally.
 
 - **No blocking.** State handlers must never call `delay()` or spin-wait. Use
   timers instead.
