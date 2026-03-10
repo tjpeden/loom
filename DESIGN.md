@@ -399,6 +399,35 @@ Flat state machines are explicitly preferred over hierarchical ones for
 simplicity. Actors that become too complex should be decomposed into multiple
 cooperating Actors rather than adding state hierarchy.
 
+### Shared Peripheral Access (I2C, SPI)
+
+Loom's "no shared mutable state" guarantee applies to Actor data, but hardware
+peripherals like the I2C bus (`Wire`) or SPI bus are shared mutable resources
+that sit outside the Actor model. If two Actors at different priorities both
+perform I2C transactions, the higher-priority Actor can preempt the lower one
+mid-transaction, corrupting the bus.
+
+The recommended approach is **priority discipline**: all Actors that access the
+same peripheral bus must be registered at the same FreeRTOS priority. Because
+`configUSE_TIME_SLICING` is disabled on the nRF52840, same-priority tasks
+cannot preempt each other — each runs until it blocks on its queue. This means
+their I2C/SPI transactions are naturally serialized without any mutex or
+locking.
+
+Rules:
+
+1. All Actors that touch `Wire` (I2C) must run at the same priority.
+2. All Actors that touch a given SPI bus must run at the same priority.
+3. Actors at higher priorities (e.g., button input) must **never** access a
+   bus shared by lower-priority Actors.
+4. Keep bus transactions short — complete them within a single event handler
+   invocation so the Actor returns to its queue promptly.
+
+This approach requires no framework changes, no mutexes, and no additional
+Actors. If a future project requires I2C-using Actors at different priorities,
+a FreeRTOS mutex wrapper around `Wire` transactions would be the next step, at
+the cost of introducing blocking.
+
 ---
 
 ## 7. API Design
@@ -1085,6 +1114,7 @@ Loom/
 | **BLE stack management** | Out of scope. Loom provides patterns for bridging BLE callbacks into events, but does not manage the BLE stack itself. |
 | **Display rendering** | Out of scope. A Display Actor is a natural pattern, but Loom does not include graphics primitives. |
 | **Multi-board support (v1)** | Not a goal for v1. The nRF52840 is the only supported target. The Platform abstraction exists to make future ports possible. |
+| **Shared peripheral arbitration** | Not provided by the framework. Users must ensure all Actors sharing a bus (I2C, SPI) run at the same priority. See Section 6, "Shared Peripheral Access." |
 
 ---
 
